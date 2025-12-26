@@ -1,6 +1,6 @@
 import express from "express";
 import { getDoctors, addDoctor } from "../controllers/doctor.controller.js";
-import { protect } from "../controllers/authController.js";
+import { protect } from "../controllers/authcontroller.js";
 
 const router = express.Router();
 
