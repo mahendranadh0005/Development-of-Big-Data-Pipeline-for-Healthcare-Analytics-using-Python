@@ -6,6 +6,7 @@ import authRoutes from "./routes/auth.routes.js";
 import patientRoutes from "./routes/patient.routes.js";
 import visitRoutes from "./routes/visit.routes.js";
 import prescriptionRoutes from "./routes/prescription.routes.js";
+import doctorRoutes from "./routes/doctor.routes.js";
 
 dotenv.config();
 
@@ -33,5 +34,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/patients", patientRoutes);
 app.use("/api/visits", visitRoutes);
 app.use("/api/prescriptions", prescriptionRoutes);
+app.use("/api/doctors", doctorRoutes);
+
 
 export default app;
