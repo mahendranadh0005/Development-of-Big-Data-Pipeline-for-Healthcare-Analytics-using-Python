@@ -37,4 +37,8 @@ export const login = async (req, res) => {
   } catch (err) {
     res.status(500).json({ message: "Server error" });
   }
+  console.log("Entered password:", password);
+  console.log("DB hash:", user.password);
+  console.log("bcrypt match:", await bcrypt.compare(password, user.password));
+
 };
