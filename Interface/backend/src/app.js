@@ -11,9 +11,29 @@ dotenv.config();
 
 const app = express();
 
-app.use(cors());
+/* =======================
+   ✅ CORS CONFIG (FIX)
+======================= */
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "https://development-of-big-data-pipeline-for.vercel.app",
+    ],
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
+
+// 👇 REQUIRED FOR PREFLIGHT
+app.options("*", cors());
+
 app.use(express.json());
 
+/* =======================
+   ROUTES
+======================= */
 app.use("/api/auth", authRoutes);
 app.use("/api/patients", patientRoutes);
 app.use("/api/visits", visitRoutes);
