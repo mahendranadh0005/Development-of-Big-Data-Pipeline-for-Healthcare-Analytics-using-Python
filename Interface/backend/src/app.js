@@ -11,22 +11,40 @@ dotenv.config();
 
 const app = express();
 
-app.use(
-  cors({
-    origin: [
-      "http://localhost:5173",
-      "https://development-of-big-data-pipeline-fo.vercel.app",
-    ],
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
+/* 🔑 REQUIRED FOR RENDER */
+app.set("trust proxy", 1);
 
-// REQUIRED FOR PREFLIGHT
-app.options("*", cors());
+/* 🔑 HARDENED CORS */
+const corsOptions = {
+  origin: (origin, callback) => {
+    // allow server-to-server & same-origin
+    if (!origin) return callback(null, true);
+
+    const allowed = [
+      "https://development-of-big-data-pipeline-for.vercel.app",
+      "http://localhost:5173"
+    ];
+
+    if (allowed.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("CORS not allowed"));
+    }
+  },
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: false,
+  optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
+
+/* 🔑 HANDLE PREFLIGHT EXPLICITLY */
+app.options("*", cors(corsOptions));
 
 app.use(express.json());
 
+/* ROUTES */
 app.use("/api/auth", authRoutes);
 app.use("/api/patients", patientRoutes);
 app.use("/api/visits", visitRoutes);
