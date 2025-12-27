@@ -169,6 +169,27 @@ export default function AddPatientModal({
               </SelectContent>
             </Select>
           </div>
+                    <div>
+            <Label>Blood Group</Label>
+            <Select
+              value={formData.blood_group}
+              onValueChange={(v) =>
+                setFormData({ ...formData, blood_group: v })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select blood group" />
+              </SelectTrigger>
+              <SelectContent>
+                {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map((bg) => (
+                  <SelectItem key={bg} value={bg}>
+                    {bg}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
 
           <div>
             <Label>Phone Number</Label>
@@ -179,6 +200,16 @@ export default function AddPatientModal({
               }
             />
           </div>
+          <div>
+            <Label>Emergency Contact</Label>
+            <Input
+              value={formData.emergency_contact}
+              onChange={(e) =>
+                setFormData({ ...formData, emergency_contact: e.target.value })
+              }
+            />
+        </div>
+
 
           <div>
             <Label>Email</Label>
@@ -189,6 +220,76 @@ export default function AddPatientModal({
               }
             />
           </div>
+        
+        <div>
+          <Label>Hospital Location</Label>
+          <Input
+            value={formData.hospital_location}
+            onChange={(e) =>
+              setFormData({ ...formData, hospital_location: e.target.value })
+            }
+          />
+        </div>
+        <div>
+          <Label>BMI</Label>
+          <Input
+            type="number"
+            value={formData.bmi}
+            onChange={(e) =>
+              setFormData({ ...formData, bmi: e.target.value })
+            }
+          />
+        </div>
+
+        <div>
+          <Label>Smoker</Label>
+          <Select
+            value={formData.smoker_status}
+            onValueChange={(v) =>
+              setFormData({ ...formData, smoker_status: v })
+            }
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Yes">Yes</SelectItem>
+              <SelectItem value="No">No</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <Label>Alcohol Use</Label>
+          <Select
+            value={formData.alcohol_use}
+            onValueChange={(v) =>
+              setFormData({ ...formData, alcohol_use: v })
+            }
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Yes">Yes</SelectItem>
+              <SelectItem value="No">No</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <Label>Registration Date</Label>
+          <Input
+            type="date"
+            value={formData.registration_date}
+            onChange={(e) =>
+              setFormData({ ...formData, registration_date: e.target.value })
+            }
+          />
+       </div>
+
+        
+
 
           <div className="md:col-span-2">
             <Label>Chronic Conditions (comma separated)</Label>
