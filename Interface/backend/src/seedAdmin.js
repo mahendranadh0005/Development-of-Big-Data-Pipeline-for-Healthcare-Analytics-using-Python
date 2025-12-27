@@ -17,7 +17,7 @@ const seedAdmin = async () => {
   const admin = new User({
     username: "admin",
     password: await bcrypt.hash("admin123", 10),
-    role: "hospital", // ✅ FIXED
+    role: "admin", // ✅ FIXED
   });
 
   await admin.save();
