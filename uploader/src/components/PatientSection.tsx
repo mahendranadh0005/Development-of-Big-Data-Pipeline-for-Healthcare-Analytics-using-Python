@@ -2,7 +2,7 @@ import { useState } from 'react';
 import axios from 'axios';
 import { Upload, UserPlus } from 'lucide-react';
 
-const API_BASE = 'http://localhost:5000';
+import { API_BASE } from "@/config/api";
 
 const CHRONIC_CONDITIONS = [
   'Diabetes',

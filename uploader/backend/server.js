@@ -8,8 +8,14 @@ dotenv.config();
 connectDB();
 
 const app = express();
+app.use(cors({
+  origin: [
+    "http://localhost:5173",
+    "https://development-of-big-data-pipeline-fo.vercel.app/"
+  ],
+  credentials: true
+}));
 
-app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // 🔥 REQUIRED FOR CSV
 
