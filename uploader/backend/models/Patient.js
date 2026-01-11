@@ -17,3 +17,5 @@ const PatientSchema = new mongoose.Schema({
   registration_date: Date,
   insurance_type: String
 }, { strict: true });
+
+module.exports = mongoose.model("Patient", PatientSchema);
