@@ -35,7 +35,17 @@ router.post("/upload", upload.single("file"), async (req, res) => {
         smoker_status: row.smoker_status,
         alcohol_use: row.alcohol_use,
         insurance_type: row.insurance_type,
-        chronic_conditions: [],
+        chronic_conditions:
+                  row.chronic_conditions &&
+                  row.chronic_conditions.toLowerCase() !== "none"
+                    ? row.chronic_conditions
+                        .split(",")
+                        .map(c => c.trim())
+                        .filter(Boolean)
+                    : [],
+
+
+ 
         registration_date: new Date(row.registration_date)
       });
     })
