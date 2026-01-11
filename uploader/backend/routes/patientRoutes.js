@@ -35,17 +35,18 @@ router.post("/upload", upload.single("file"), async (req, res) => {
         smoker_status: row.smoker_status,
         alcohol_use: row.alcohol_use,
         insurance_type: row.insurance_type,
+
+        // ✅ FIXED: chronic_conditions (handles empty, missing, none, values)
         chronic_conditions:
-                  row.chronic_conditions &&
-                  row.chronic_conditions.toLowerCase() !== "none"
-                    ? row.chronic_conditions
-                        .split(",")
-                        .map(c => c.trim())
-                        .filter(Boolean)
-                    : [],
+          typeof row.chronic_conditions === "string" &&
+          row.chronic_conditions.trim() !== "" &&
+          row.chronic_conditions.trim().toLowerCase() !== "none"
+            ? row.chronic_conditions
+                .split(",")
+                .map(c => c.trim())
+                .filter(c => c.length > 0)
+            : [],
 
-
- 
         registration_date: new Date(row.registration_date)
       });
     })
