@@ -9,7 +9,6 @@ connectDB();
 
 const app = express();
 
-/* ✅ CORS — NO TRAILING SLASH */
 const corsOptions = {
   origin: [
     "http://localhost:5173",
@@ -20,8 +19,7 @@ const corsOptions = {
   allowedHeaders: ["Content-Type", "Authorization"]
 };
 
-app.use(cors(corsOptions));
-app.options("*", cors(corsOptions)); // ✅ PRE-FLIGHT FIX
+app.use(cors(corsOptions)); // ✅ THIS IS ENOUGH
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
