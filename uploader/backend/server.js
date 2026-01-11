@@ -8,16 +8,23 @@ dotenv.config();
 connectDB();
 
 const app = express();
-app.use(cors({
+
+/* ✅ CORS — NO TRAILING SLASH */
+const corsOptions = {
   origin: [
     "http://localhost:5173",
-    "https://development-of-big-data-pipeline-fo.vercel.app/"
+    "https://development-of-big-data-pipeline-fo.vercel.app"
   ],
-  credentials: true
-}));
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+};
+
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions)); // ✅ PRE-FLIGHT FIX
 
 app.use(express.json());
-app.use(express.urlencoded({ extended: true })); // 🔥 REQUIRED FOR CSV
+app.use(express.urlencoded({ extended: true }));
 
 app.use("/api/patients", require("./routes/patientRoutes"));
 app.use("/api/visits", require("./routes/visitRoutes"));
