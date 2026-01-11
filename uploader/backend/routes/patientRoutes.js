@@ -59,7 +59,7 @@ router.post("/upload", upload.single("file"), async (req, res) => {
       try {
         await Patient.insertMany(patients, {
           ordered: false,
-          runValidators: true
+          
         });
 
         fs.unlinkSync(req.file.path);
