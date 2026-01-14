@@ -343,49 +343,104 @@ def main():
         col7, col8 = st.columns(2)
 
         with col7:
-                    df_bmi = load_aggregation(selected_batch, "avg_bmi_by_gender_location")
+            df_bmi = load_aggregation(selected_batch, "avg_bmi_by_gender_location")
+            if df_bmi is not None and not df_bmi.empty:
+                df_bmi_pred = (
+                    df_bmi.groupby("gender", as_index=False)["avg_bmi"]
+                    .mean()
+                )
+                fig = px.bar(
+                    df_bmi_pred,
+                    x="gender",
+                    y="avg_bmi",
+                    title="Average BMI by Gender (Risk Indicator)",
+                    text="avg_bmi",
+                    color="gender",
+                    color_discrete_sequence=px.colors.qualitative.Set2
+                )
+                fig.add_hline(
+                    y=25,
+                    line_dash="dash",
+                    line_color="red",
+                    annotation_text="Healthy BMI Threshold (25)",
+                    annotation_position="top right"
+                )
+                fig.update_traces(texttemplate="%{text:.1f}", textposition="outside")
+                fig.update_layout(
+                    yaxis_title="Average BMI",
+                    xaxis_title="Gender",
+                    height=420,
+                    hovermode="x unified",
+                    showlegend=False
+                )
+                st.plotly_chart(fig, use_container_width=True)
+            else:
+                st.info("No BMI data available")
 
-                    if df_bmi is not None and not df_bmi.empty:
-                        # Aggregate across locations for prediction-level view
-                        df_bmi_pred = (
-                            df_bmi.groupby("gender", as_index=False)["avg_bmi"]
-                            .mean()
-                        )
+        # Data Tables Section
+        st.markdown("---")
+        st.subheader("📊 Patient Analytics Data Tables")
 
-                        fig = px.bar(
-                            df_bmi_pred,
-                            x="gender",
-                            y="avg_bmi",
-                            title="Average BMI by Gender (Risk Indicator)",
-                            text="avg_bmi",
-                            color="gender",
-                            color_discrete_sequence=px.colors.qualitative.Set2
-                        )
+        col_t1, col_t2 = st.columns(2)
 
-                        # Healthy BMI reference line (WHO standard)
-                        fig.add_hline(
-                            y=25,
-                            line_dash="dash",
-                            line_color="red",
-                            annotation_text="Healthy BMI Threshold (25)",
-                            annotation_position="top right"
-                        )
+        with col_t1:
+            st.markdown("**Patient Distribution by Gender**")
+            df_gender = load_aggregation(selected_batch, "patient_by_gender")
+            if df_gender is not None:
+                st.dataframe(df_gender, use_container_width=True, hide_index=True)
+            else:
+                st.info("No data available")
 
-                        fig.update_traces(texttemplate="%{text:.1f}", textposition="outside")
+        with col_t2:
+            st.markdown("**Patient Distribution by Age Group**")
+            df_age = load_aggregation(selected_batch, "patient_by_age_group")
+            if df_age is not None:
+                st.dataframe(df_age, use_container_width=True, hide_index=True)
+            else:
+                st.info("No data available")
 
-                        fig.update_layout(
-                            yaxis_title="Average BMI",
-                            xaxis_title="Gender",
-                            height=420,
-                            hovermode="x unified",
-                            showlegend=False
-                        )
+        col_t3, col_t4 = st.columns(2)
 
-                        st.plotly_chart(fig, use_container_width=True)
+        with col_t3:
+            st.markdown("**Patients by Hospital Location**")
+            df_loc = load_aggregation(selected_batch, "patient_by_location")
+            if df_loc is not None:
+                st.dataframe(df_loc, use_container_width=True, hide_index=True)
+            else:
+                st.info("No data available")
 
-                    else:
-                        st.info("No BMI data available")
+        with col_t4:
+            st.markdown("**Insurance Type Distribution**")
+            df_ins = load_aggregation(selected_batch, "patient_by_insurance")
+            if df_ins is not None:
+                st.dataframe(df_ins, use_container_width=True, hide_index=True)
+            else:
+                st.info("No data available")
 
+        col_t5, col_t6 = st.columns(2)
+
+        with col_t5:
+            st.markdown("**Smoking Rate by Location (%)**")
+            df_smoke = load_aggregation(selected_batch, "pct_smokers_by_location")
+            if df_smoke is not None:
+                st.dataframe(df_smoke, use_container_width=True, hide_index=True)
+            else:
+                st.info("No data available")
+
+        with col_t6:
+            st.markdown("**Alcohol Use by Age Group (%)**")
+            df_alcohol = load_aggregation(selected_batch, "pct_alcohol_by_age_group")
+            if df_alcohol is not None:
+                st.dataframe(df_alcohol, use_container_width=True, hide_index=True)
+            else:
+                st.info("No data available")
+
+        st.markdown("**Average BMI by Gender and Location**")
+        df_bmi = load_aggregation(selected_batch, "avg_bmi_by_gender_location")
+        if df_bmi is not None:
+            st.dataframe(df_bmi, use_container_width=True, hide_index=True)
+        else:
+            st.info("No data available")
 
     # ========================= TAB 2: VISIT ANALYTICS =========================
     with tab2:
@@ -469,6 +524,71 @@ def main():
             else:
                 st.info("No readmission severity data")
 
+        # Data Tables Section
+        st.markdown("---")
+        st.subheader("📊 Visit Analytics Data Tables")
+
+        col_t1, col_t2 = st.columns(2)
+
+        with col_t1:
+            st.markdown("**Monthly Visit Count**")
+            df_monthly = load_aggregation(selected_batch, "monthly_visit_count")
+            if df_monthly is not None:
+                st.dataframe(df_monthly, use_container_width=True, hide_index=True)
+            else:
+                st.info("No data available")
+
+        with col_t2:
+            st.markdown("**Outpatient vs Inpatient Visits**")
+            df_visit_type = load_aggregation(selected_batch, "op_vs_ip_visit_ratio")
+            if df_visit_type is not None:
+                st.dataframe(df_visit_type, use_container_width=True, hide_index=True)
+            else:
+                st.info("No data available")
+
+        col_t3, col_t4 = st.columns(2)
+
+        with col_t3:
+            st.markdown("**Avg Length of Stay by Severity**")
+            df_los = load_aggregation(selected_batch, "avg_los_by_severity")
+            if df_los is not None:
+                st.dataframe(df_los, use_container_width=True, hide_index=True)
+            else:
+                st.info("No data available")
+
+        with col_t4:
+            st.markdown("**Visits by Location**")
+            df_visit_loc = load_aggregation(selected_batch, "visits_by_location")
+            if df_visit_loc is not None:
+                st.dataframe(df_visit_loc, use_container_width=True, hide_index=True)
+            else:
+                st.info("No data available")
+
+        col_t5, col_t6 = st.columns(2)
+
+        with col_t5:
+            st.markdown("**Readmission Rate**")
+            df_readm = load_aggregation(selected_batch, "readmission_rate")
+            if df_readm is not None:
+                st.dataframe(df_readm, use_container_width=True, hide_index=True)
+            else:
+                st.info("No data available")
+
+        with col_t6:
+            st.markdown("**Avg Gap Before Readmission**")
+            df_gap = load_aggregation(selected_batch, "avg_gap_before_readmission")
+            if df_gap is not None:
+                st.dataframe(df_gap, use_container_width=True, hide_index=True)
+            else:
+                st.info("No data available")
+
+        st.markdown("**Readmissions by Severity**")
+        df_readm_sev = load_aggregation(selected_batch, "readmissions_by_severity")
+        if df_readm_sev is not None:
+            st.dataframe(df_readm_sev, use_container_width=True, hide_index=True)
+        else:
+            st.info("No data available")
+
     # ========================= TAB 3: PRESCRIPTION ANALYTICS =========================
     with tab3:
         st.header("Prescription & Drug Analysis")
@@ -488,13 +608,35 @@ def main():
         with col2:
             df_days = load_aggregation(selected_batch, "avg_days_supply_by_drug")
             if df_days is not None:
-                df_days = df_days.sort_values("avg_days_supply", ascending=False).head(10)
-                fig = create_bar_chart(df_days, "drug_name", "avg_days_supply",
+                df_days_sorted = df_days.sort_values("avg_days_supply", ascending=False).head(10)
+                fig = create_bar_chart(df_days_sorted, "drug_name", "avg_days_supply",
                                      "Avg Days Supply by Drug (Top 10)")
                 if fig:
                     st.plotly_chart(fig, use_container_width=True)
             else:
                 st.info("No days supply data available")
+
+        # Data Tables Section
+        st.markdown("---")
+        st.subheader("📊 Prescription Analytics Data Tables")
+
+        col_t1, col_t2 = st.columns(2)
+
+        with col_t1:
+            st.markdown("**Most Prescribed Drugs**")
+            df_drugs = load_aggregation(selected_batch, "most_prescribed_drugs")
+            if df_drugs is not None:
+                st.dataframe(df_drugs, use_container_width=True, hide_index=True)
+            else:
+                st.info("No data available")
+
+        with col_t2:
+            st.markdown("**Avg Days Supply by Drug**")
+            df_days = load_aggregation(selected_batch, "avg_days_supply_by_drug")
+            if df_days is not None:
+                st.dataframe(df_days, use_container_width=True, hide_index=True)
+            else:
+                st.info("No data available")
 
     # ========================= TAB 4: DISEASE ANALYTICS =========================
     with tab4:
@@ -575,6 +717,35 @@ def main():
         else:
             st.info("No disease trend data available")
 
+        # Data Tables Section
+        st.markdown("---")
+        st.subheader("📊 Disease Analytics Data Tables")
+
+        col_t1, col_t2 = st.columns(2)
+
+        with col_t1:
+            st.markdown("**Most Common Diseases**")
+            df_disease = load_aggregation(selected_batch, "most_common_diseases")
+            if df_disease is not None:
+                st.dataframe(df_disease, use_container_width=True, hide_index=True)
+            else:
+                st.info("No data available")
+
+        with col_t2:
+            st.markdown("**Disease by Location**")
+            df_disease_loc = load_aggregation(selected_batch, "disease_by_location")
+            if df_disease_loc is not None:
+                st.dataframe(df_disease_loc, use_container_width=True, hide_index=True)
+            else:
+                st.info("No data available")
+
+        st.markdown("**Monthly Disease Trends**")
+        df_trends = load_aggregation(selected_batch, "monthly_disease_trends")
+        if df_trends is not None:
+            st.dataframe(df_trends, use_container_width=True, hide_index=True)
+        else:
+            st.info("No data available")
+
     # ========================= TAB 5: COST ANALYTICS =========================
     with tab5:
         st.header("Healthcare Cost Analysis")
@@ -584,8 +755,8 @@ def main():
         with col1:
             df_cost_diag = load_aggregation(selected_batch, "avg_cost_by_diagnosis")
             if df_cost_diag is not None:
-                df_cost_diag = df_cost_diag.sort_values("avg_cost", ascending=False).head(10)
-                fig = create_bar_chart(df_cost_diag,
+                df_cost_diag_sorted = df_cost_diag.sort_values("avg_cost", ascending=False).head(10)
+                fig = create_bar_chart(df_cost_diag_sorted,
                                      "diagnosis_description", "avg_cost",
                                      "Avg Cost by Diagnosis (Top 10)")
                 if fig:
@@ -616,6 +787,35 @@ def main():
                 st.plotly_chart(fig, use_container_width=True)
         else:
             st.info("No cost by location data available")
+
+        # Data Tables Section
+        st.markdown("---")
+        st.subheader("📊 Cost Analytics Data Tables")
+
+        col_t1, col_t2 = st.columns(2)
+
+        with col_t1:
+            st.markdown("**Avg Cost by Diagnosis**")
+            df_cost_diag = load_aggregation(selected_batch, "avg_cost_by_diagnosis")
+            if df_cost_diag is not None:
+                st.dataframe(df_cost_diag, use_container_width=True, hide_index=True)
+            else:
+                st.info("No data available")
+
+        with col_t2:
+            st.markdown("**Avg Cost by Severity**")
+            df_cost_sev = load_aggregation(selected_batch, "avg_cost_by_severity")
+            if df_cost_sev is not None:
+                st.dataframe(df_cost_sev, use_container_width=True, hide_index=True)
+            else:
+                st.info("No data available")
+
+        st.markdown("**Cost by Location**")
+        df_cost_loc = load_aggregation(selected_batch, "cost_by_location")
+        if df_cost_loc is not None:
+            st.dataframe(df_cost_loc, use_container_width=True, hide_index=True)
+        else:
+            st.info("No data available")
 
 # ==============================================================================
 if __name__ == "__main__":
