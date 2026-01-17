@@ -80,7 +80,12 @@ FACT_BASE = "compiled_aggregation/"
 
 @st.cache_resource
 def get_s3_client():
-    return boto3.client('s3')
+    return boto3.client(
+        "s3",
+        aws_access_key_id=st.secrets["AWS_ACCESS_KEY_ID"],
+        aws_secret_access_key=st.secrets["AWS_SECRET_ACCESS_KEY"],
+        region_name=st.secrets["AWS_DEFAULT_REGION"]
+    )
 
 # ==============================================================================
 # BATCH LISTING (MULTI-BATCH)
