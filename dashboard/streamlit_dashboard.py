@@ -71,15 +71,27 @@ h2, h3 {
 # AWS S3 CONFIGURATION
 # ==============================================================================
 BUCKET = "my-healthcare-analytics-data"
+
+# ✅ Graphs come from this (Gold aggregations)
 AGG_BASE = "data_aggregated/"
+
+# ✅ Tables come from this (Master fact table)
+FACT_BASE = "compiled_aggregation/"
 
 @st.cache_resource
 def get_s3_client():
     return boto3.client('s3')
 
+# ==============================================================================
+# BATCH LISTING (MULTI-BATCH)
+# ==============================================================================
 @st.cache_data(ttl=300)
 def list_available_batches():
-    """List all available batch IDs from S3 (format: _batch_id=XXXXX)"""
+    """
+    List all available batch IDs from S3 using data_aggregated folder
+    Expected:
+      data_aggregated/batch_id=<BATCH_ID>/
+    """
     try:
         s3 = get_s3_client()
         resp = s3.list_objects_v2(
@@ -87,34 +99,37 @@ def list_available_batches():
             Prefix=AGG_BASE,
             Delimiter="/"
         )
-        
+
         batches = []
-        if "CommonPrefixes" in resp:
-            for p in resp["CommonPrefixes"]:
-                prefix = p["Prefix"]
-                # Extract batch_id from "_batch_id=XXXXX/" format
-                if "_batch_id=" in prefix:
-                    batch_id = prefix.split("_batch_id=")[1].rstrip("/")
-                    batches.append(batch_id)
-        
+        for p in resp.get("CommonPrefixes", []):
+            prefix = p["Prefix"]
+            if "batch_id=" in prefix:
+                batch_id = prefix.split("batch_id=")[1].rstrip("/")
+                batches.append(batch_id)
+
         return sorted(batches, reverse=True) if batches else []
     except Exception as e:
         st.error(f"Error listing batches: {e}")
         return []
 
+# ==============================================================================
+# LOAD PARQUET DATA FROM S3
+# ==============================================================================
 @st.cache_data(ttl=300)
-def load_aggregation(batch_id, agg_name):
-    """Load aggregation data from S3 (matches Spark output structure)"""
+def load_parquet_folder_as_df(s3_prefix):
+    """
+    Reads all parquet part files under a given S3 prefix into one pandas DF.
+    Example s3_prefix:
+      data_aggregated/batch_id=xxx/patient_by_gender/
+    """
     try:
         s3 = get_s3_client()
-        # Format: data_aggregated/_batch_id=XXXXX/aggregation_name/
-        path = f"{AGG_BASE}_batch_id={batch_id}/{agg_name}/"
 
-        resp = s3.list_objects_v2(Bucket=BUCKET, Prefix=path)
-        
+        resp = s3.list_objects_v2(Bucket=BUCKET, Prefix=s3_prefix)
+
         if "Contents" not in resp:
             return None
-        
+
         parquet_files = [
             obj["Key"] for obj in resp["Contents"]
             if obj["Key"].endswith(".parquet")
@@ -138,18 +153,46 @@ def load_aggregation(batch_id, agg_name):
 
         df = pd.concat(dfs, ignore_index=True)
         return df if not df.empty else None
+
     except Exception as e:
-        st.warning(f"Error loading {agg_name}: {e}")
+        st.warning(f"Error loading parquet folder {s3_prefix}: {e}")
         return None
 
+@st.cache_data(ttl=300)
+def load_aggregation(batch_id, agg_name):
+    """
+    Loads ONE aggregation dataset from:
+      data_aggregated/batch_id=<BATCH_ID>/<agg_name>/
+    """
+    path = f"{AGG_BASE}batch_id={batch_id}/{agg_name}/"
+    return load_parquet_folder_as_df(path)
+
+@st.cache_data(ttl=300)
+def load_fact_table(batch_id):
+    """
+    Loads Master Fact Table from:
+      compiled_aggregation/batch_id=<BATCH_ID>/fact_patient_encounters/
+    """
+    path = f"{FACT_BASE}batch_id={batch_id}/fact_patient_encounters/"
+    return load_parquet_folder_as_df(path)
+
 # ==============================================================================
-# CHART HELPERS
+# TABLE FILTER (TAB-WISE FROM FACT)
 # ==============================================================================
-def create_bar_chart(df, x_col, y_col, title, color=None):
-    """Create a bar chart"""
+def safe_filter_columns(df, cols):
     if df is None or df.empty:
         return None
+    available = [c for c in cols if c in df.columns]
+    if not available:
+        return None
+    return df[available]
 
+# ==============================================================================
+# CHART HELPERS (UNCHANGED)
+# ==============================================================================
+def create_bar_chart(df, x_col, y_col, title, color=None):
+    if df is None or df.empty:
+        return None
     try:
         df_sorted = df.sort_values(by=y_col, ascending=False)
 
@@ -171,17 +214,14 @@ def create_bar_chart(df, x_col, y_col, title, color=None):
             height=400,
             hovermode='x unified'
         )
-
         return fig
     except Exception as e:
         st.warning(f"Could not create bar chart: {e}")
         return None
 
 def create_line_chart(df, x_col, y_col, title, color=None):
-    """Create a line chart"""
     if df is None or df.empty:
         return None
-
     try:
         df_sorted = df.sort_values(by=x_col)
 
@@ -201,17 +241,14 @@ def create_line_chart(df, x_col, y_col, title, color=None):
             height=400,
             hovermode='x unified'
         )
-
         return fig
     except Exception as e:
         st.warning(f"Could not create line chart: {e}")
         return None
 
 def create_pie_chart(df, names_col, values_col, title):
-    """Create a pie chart"""
     if df is None or df.empty:
         return None
-
     try:
         fig = px.pie(
             df,
@@ -220,10 +257,8 @@ def create_pie_chart(df, names_col, values_col, title):
             title=title,
             color_discrete_sequence=px.colors.qualitative.Pastel
         )
-
         fig.update_traces(textposition='inside', textinfo='percent+label')
         fig.update_layout(height=400)
-
         return fig
     except Exception as e:
         st.warning(f"Could not create pie chart: {e}")
@@ -237,9 +272,8 @@ def main():
 
     st.sidebar.title("⚙️ Configuration")
 
-    # List all batches
     batches = list_available_batches()
-    
+
     if not batches:
         st.sidebar.error("No data batches found in S3")
         st.info("Available batches will appear here once data is uploaded.")
@@ -253,6 +287,9 @@ def main():
     selected_batch = st.sidebar.selectbox("Select Data Batch", batches, index=0)
     st.sidebar.markdown("---")
     st.sidebar.success(f"✅ Selected Batch: **{selected_batch}**")
+
+    # ✅ Load fact table once (used for tab tables)
+    df_fact = load_fact_table(selected_batch)
 
     tab1, tab2, tab3, tab4, tab5 = st.tabs([
         "👥 Patient Analytics",
@@ -340,8 +377,7 @@ def main():
             else:
                 st.info("No alcohol data available")
 
-        col7, col8 = st.columns(2)
-
+        col7 = st.columns(1)[0]
         with col7:
             df_bmi = load_aggregation(selected_batch, "avg_bmi_by_gender_location")
             if df_bmi is not None and not df_bmi.empty:
@@ -377,70 +413,20 @@ def main():
             else:
                 st.info("No BMI data available")
 
-        # Data Tables Section
         st.markdown("---")
-        st.subheader("📊 Patient Analytics Data Tables")
+        st.subheader("📋 Patient Analytics Table (from Master Fact Table)")
 
-        col_t1, col_t2 = st.columns(2)
+        patient_cols = [
+            "patient_id", "full_name", "age", "gender", "blood_group",
+            "hospital_location", "insurance_type", "bmi",
+            "smoker_status", "alcohol_use"
+        ]
+        df_patient_table = safe_filter_columns(df_fact, patient_cols)
 
-        with col_t1:
-            st.markdown("**Patient Distribution by Gender**")
-            df_gender = load_aggregation(selected_batch, "patient_by_gender")
-            if df_gender is not None:
-                st.dataframe(df_gender, use_container_width=True, hide_index=True)
-            else:
-                st.info("No data available")
-
-        with col_t2:
-            st.markdown("**Patient Distribution by Age Group**")
-            df_age = load_aggregation(selected_batch, "patient_by_age_group")
-            if df_age is not None:
-                st.dataframe(df_age, use_container_width=True, hide_index=True)
-            else:
-                st.info("No data available")
-
-        col_t3, col_t4 = st.columns(2)
-
-        with col_t3:
-            st.markdown("**Patients by Hospital Location**")
-            df_loc = load_aggregation(selected_batch, "patient_by_location")
-            if df_loc is not None:
-                st.dataframe(df_loc, use_container_width=True, hide_index=True)
-            else:
-                st.info("No data available")
-
-        with col_t4:
-            st.markdown("**Insurance Type Distribution**")
-            df_ins = load_aggregation(selected_batch, "patient_by_insurance")
-            if df_ins is not None:
-                st.dataframe(df_ins, use_container_width=True, hide_index=True)
-            else:
-                st.info("No data available")
-
-        col_t5, col_t6 = st.columns(2)
-
-        with col_t5:
-            st.markdown("**Smoking Rate by Location (%)**")
-            df_smoke = load_aggregation(selected_batch, "pct_smokers_by_location")
-            if df_smoke is not None:
-                st.dataframe(df_smoke, use_container_width=True, hide_index=True)
-            else:
-                st.info("No data available")
-
-        with col_t6:
-            st.markdown("**Alcohol Use by Age Group (%)**")
-            df_alcohol = load_aggregation(selected_batch, "pct_alcohol_by_age_group")
-            if df_alcohol is not None:
-                st.dataframe(df_alcohol, use_container_width=True, hide_index=True)
-            else:
-                st.info("No data available")
-
-        st.markdown("**Average BMI by Gender and Location**")
-        df_bmi = load_aggregation(selected_batch, "avg_bmi_by_gender_location")
-        if df_bmi is not None:
-            st.dataframe(df_bmi, use_container_width=True, hide_index=True)
+        if df_patient_table is not None:
+            st.dataframe(df_patient_table.drop_duplicates(), use_container_width=True, hide_index=True)
         else:
-            st.info("No data available")
+            st.info("Fact table not available for Patient tab.")
 
     # ========================= TAB 2: VISIT ANALYTICS =========================
     with tab2:
@@ -524,70 +510,21 @@ def main():
             else:
                 st.info("No readmission severity data")
 
-        # Data Tables Section
         st.markdown("---")
-        st.subheader("📊 Visit Analytics Data Tables")
+        st.subheader("📋 Visit Analytics Table (from Master Fact Table)")
 
-        col_t1, col_t2 = st.columns(2)
+        visit_cols = [
+            "visit_id", "patient_id", "visit_date", "visit_type",
+            "severity_score", "length_of_stay",
+            "previous_visit_gap_days", "readmitted_within_30_days",
+            "visit_cost", "hospital_location"
+        ]
+        df_visit_table = safe_filter_columns(df_fact, visit_cols)
 
-        with col_t1:
-            st.markdown("**Monthly Visit Count**")
-            df_monthly = load_aggregation(selected_batch, "monthly_visit_count")
-            if df_monthly is not None:
-                st.dataframe(df_monthly, use_container_width=True, hide_index=True)
-            else:
-                st.info("No data available")
-
-        with col_t2:
-            st.markdown("**Outpatient vs Inpatient Visits**")
-            df_visit_type = load_aggregation(selected_batch, "op_vs_ip_visit_ratio")
-            if df_visit_type is not None:
-                st.dataframe(df_visit_type, use_container_width=True, hide_index=True)
-            else:
-                st.info("No data available")
-
-        col_t3, col_t4 = st.columns(2)
-
-        with col_t3:
-            st.markdown("**Avg Length of Stay by Severity**")
-            df_los = load_aggregation(selected_batch, "avg_los_by_severity")
-            if df_los is not None:
-                st.dataframe(df_los, use_container_width=True, hide_index=True)
-            else:
-                st.info("No data available")
-
-        with col_t4:
-            st.markdown("**Visits by Location**")
-            df_visit_loc = load_aggregation(selected_batch, "visits_by_location")
-            if df_visit_loc is not None:
-                st.dataframe(df_visit_loc, use_container_width=True, hide_index=True)
-            else:
-                st.info("No data available")
-
-        col_t5, col_t6 = st.columns(2)
-
-        with col_t5:
-            st.markdown("**Readmission Rate**")
-            df_readm = load_aggregation(selected_batch, "readmission_rate")
-            if df_readm is not None:
-                st.dataframe(df_readm, use_container_width=True, hide_index=True)
-            else:
-                st.info("No data available")
-
-        with col_t6:
-            st.markdown("**Avg Gap Before Readmission**")
-            df_gap = load_aggregation(selected_batch, "avg_gap_before_readmission")
-            if df_gap is not None:
-                st.dataframe(df_gap, use_container_width=True, hide_index=True)
-            else:
-                st.info("No data available")
-
-        st.markdown("**Readmissions by Severity**")
-        df_readm_sev = load_aggregation(selected_batch, "readmissions_by_severity")
-        if df_readm_sev is not None:
-            st.dataframe(df_readm_sev, use_container_width=True, hide_index=True)
+        if df_visit_table is not None:
+            st.dataframe(df_visit_table.drop_duplicates(subset=["visit_id"]), use_container_width=True, hide_index=True)
         else:
-            st.info("No data available")
+            st.info("Fact table not available for Visit tab.")
 
     # ========================= TAB 3: PRESCRIPTION ANALYTICS =========================
     with tab3:
@@ -616,27 +553,20 @@ def main():
             else:
                 st.info("No days supply data available")
 
-        # Data Tables Section
         st.markdown("---")
-        st.subheader("📊 Prescription Analytics Data Tables")
+        st.subheader("📋 Prescription Analytics Table (from Master Fact Table)")
 
-        col_t1, col_t2 = st.columns(2)
+        pres_cols = [
+            "prescription_id", "visit_id", "patient_id",
+            "drug_name", "dosage", "quantity", "days_supply",
+            "rx_date", "cost"
+        ]
+        df_pres_table = safe_filter_columns(df_fact, pres_cols)
 
-        with col_t1:
-            st.markdown("**Most Prescribed Drugs**")
-            df_drugs = load_aggregation(selected_batch, "most_prescribed_drugs")
-            if df_drugs is not None:
-                st.dataframe(df_drugs, use_container_width=True, hide_index=True)
-            else:
-                st.info("No data available")
-
-        with col_t2:
-            st.markdown("**Avg Days Supply by Drug**")
-            df_days = load_aggregation(selected_batch, "avg_days_supply_by_drug")
-            if df_days is not None:
-                st.dataframe(df_days, use_container_width=True, hide_index=True)
-            else:
-                st.info("No data available")
+        if df_pres_table is not None:
+            st.dataframe(df_pres_table.drop_duplicates(subset=["prescription_id"]), use_container_width=True, hide_index=True)
+        else:
+            st.info("Fact table not available for Prescription tab.")
 
     # ========================= TAB 4: DISEASE ANALYTICS =========================
     with tab4:
@@ -717,34 +647,20 @@ def main():
         else:
             st.info("No disease trend data available")
 
-        # Data Tables Section
         st.markdown("---")
-        st.subheader("📊 Disease Analytics Data Tables")
+        st.subheader("📋 Disease Analytics Table (from Master Fact Table)")
 
-        col_t1, col_t2 = st.columns(2)
+        disease_cols = [
+            "prescription_id", "visit_id", "patient_id",
+            "diagnosis_id", "diagnosis_description",
+            "hospital_location", "rx_date"
+        ]
+        df_disease_table = safe_filter_columns(df_fact, disease_cols)
 
-        with col_t1:
-            st.markdown("**Most Common Diseases**")
-            df_disease = load_aggregation(selected_batch, "most_common_diseases")
-            if df_disease is not None:
-                st.dataframe(df_disease, use_container_width=True, hide_index=True)
-            else:
-                st.info("No data available")
-
-        with col_t2:
-            st.markdown("**Disease by Location**")
-            df_disease_loc = load_aggregation(selected_batch, "disease_by_location")
-            if df_disease_loc is not None:
-                st.dataframe(df_disease_loc, use_container_width=True, hide_index=True)
-            else:
-                st.info("No data available")
-
-        st.markdown("**Monthly Disease Trends**")
-        df_trends = load_aggregation(selected_batch, "monthly_disease_trends")
-        if df_trends is not None:
-            st.dataframe(df_trends, use_container_width=True, hide_index=True)
+        if df_disease_table is not None:
+            st.dataframe(df_disease_table.drop_duplicates(), use_container_width=True, hide_index=True)
         else:
-            st.info("No data available")
+            st.info("Fact table not available for Disease tab.")
 
     # ========================= TAB 5: COST ANALYTICS =========================
     with tab5:
@@ -788,35 +704,54 @@ def main():
         else:
             st.info("No cost by location data available")
 
-        # Data Tables Section
         st.markdown("---")
-        st.subheader("📊 Cost Analytics Data Tables")
+        st.subheader("📋 Cost Analytics Table (from Master Fact Table)")
 
-        col_t1, col_t2 = st.columns(2)
+        cost_cols = [
+            "visit_id", "patient_id", "hospital_location",
+            "visit_cost", "prescription_id", "cost",
+            "diagnosis_description"
+        ]
+        df_cost_table = safe_filter_columns(df_fact, cost_cols)
 
-        with col_t1:
-            st.markdown("**Avg Cost by Diagnosis**")
-            df_cost_diag = load_aggregation(selected_batch, "avg_cost_by_diagnosis")
-            if df_cost_diag is not None:
-                st.dataframe(df_cost_diag, use_container_width=True, hide_index=True)
-            else:
-                st.info("No data available")
-
-        with col_t2:
-            st.markdown("**Avg Cost by Severity**")
-            df_cost_sev = load_aggregation(selected_batch, "avg_cost_by_severity")
-            if df_cost_sev is not None:
-                st.dataframe(df_cost_sev, use_container_width=True, hide_index=True)
-            else:
-                st.info("No data available")
-
-        st.markdown("**Cost by Location**")
-        df_cost_loc = load_aggregation(selected_batch, "cost_by_location")
-        if df_cost_loc is not None:
-            st.dataframe(df_cost_loc, use_container_width=True, hide_index=True)
+        if df_cost_table is not None:
+            st.dataframe(df_cost_table.drop_duplicates(), use_container_width=True, hide_index=True)
         else:
-            st.info("No data available")
+            st.info("Fact table not available for Cost tab.")
 
+        st.markdown("---")
+        st.subheader("💡 Cost Insights & Summary")
+
+        col_insight1, col_insight2, col_insight3 = st.columns(3)
+
+        with col_insight1:
+            df_cost_diag = load_aggregation(selected_batch, "avg_cost_by_diagnosis")
+            if df_cost_diag is not None and not df_cost_diag.empty:
+                max_cost = df_cost_diag['avg_cost'].max()
+                max_disease = df_cost_diag.loc[df_cost_diag['avg_cost'].idxmax(), 'diagnosis_description']
+                st.metric("Highest Cost Disease", f"${max_cost:,.0f}", delta=f"({max_disease})")
+            else:
+                st.info("No cost data")
+
+        with col_insight2:
+            df_cost_sev = load_aggregation(selected_batch, "avg_cost_by_severity")
+            if df_cost_sev is not None and not df_cost_sev.empty:
+                total_cost = df_cost_sev['avg_cost'].sum()
+                st.metric("Total Avg Healthcare Cost", f"${total_cost:,.0f}")
+            else:
+                st.info("No severity cost data")
+
+        with col_insight3:
+            df_cost_loc = load_aggregation(selected_batch, "cost_by_location")
+            if df_cost_loc is not None and not df_cost_loc.empty:
+                max_loc_cost = df_cost_loc['total_cost'].max()
+                max_location = df_cost_loc.loc[df_cost_loc['total_cost'].idxmax(), 'hospital_location']
+                st.metric("Highest Cost Location", f"${max_loc_cost:,.0f}", delta=f"({max_location})")
+            else:
+                st.info("No location cost data")
+
+# ==============================================================================
+# RUN DASHBOARD
 # ==============================================================================
 if __name__ == "__main__":
     main()
