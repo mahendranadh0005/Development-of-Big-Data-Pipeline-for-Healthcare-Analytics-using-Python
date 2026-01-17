@@ -142,7 +142,7 @@ def load_parquet_folder_as_df(s3_prefix):
         for key in parquet_files:
             try:
                 obj = s3.get_object(Bucket=BUCKET, Key=key)
-                df_temp = pd.read_parquet(BytesIO(obj["Body"].read()))
+                df_temp = pd.read_parquet(BytesIO(obj["Body"].read()), engine="fastparquet")
                 dfs.append(df_temp)
             except Exception as e:
                 st.warning(f"Could not load {key}: {e}")
