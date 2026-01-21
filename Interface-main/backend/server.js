@@ -9,37 +9,17 @@ connectDB();
 
 const app = express();
 
-const allowedOrigins = [
-  "http://localhost:8080",
-  "http://localhost:5173",
-  "https://development-of-big-data-pipeline-fo-three.vercel.app",
-];
-
 const corsOptions = {
-  origin: (origin, callback) => {
-    if (!origin) return callback(null, true);
-
-    if (allowedOrigins.includes(origin)) return callback(null, true);
-
-    // ✅ Allow Vercel deployments too
-    if (origin.endsWith(".vercel.app")) return callback(null, true);
-
-    return callback(new Error("Not allowed by CORS: " + origin), false);
-  },
+  origin: [
+    "http://localhost:5173",
+    "https://development-of-big-data-pipeline-fo-three.vercel.app"
+  ],
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
+  allowedHeaders: ["Content-Type", "Authorization"]
 };
 
-app.use(cors(corsOptions));
-
-app.use((req, res, next) => {
-    if (req.method === "OPTIONS") {
-      return res.sendStatus(200);
-    }
-    next();
-  });
-
+app.use(cors(corsOptions)); // ✅ THIS IS ENOUGH
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -47,7 +27,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api/patients", require("./routes/patientRoutes"));
 app.use("/api/visits", require("./routes/visitRoutes"));
 app.use("/api/prescriptions", require("./routes/prescriptionRoutes"));
-app.use("/api/doctors", require("./routes/doctorRoutes"));
+
 
 
 const PORT = process.env.PORT || 5000;
