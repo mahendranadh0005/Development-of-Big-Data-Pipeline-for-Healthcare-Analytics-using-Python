@@ -1,9 +1,9 @@
 // frontend/src/services/api.ts
 
-export const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+export const API_BASE_URL = import.meta.env.VITE_BASE_API_URL || "http://localhost:5000";
 
 if (!API_BASE_URL) {
-  console.error("VITE_API_URL is not defined");
+  console.error("VITE_BASE_API_URL is not defined");
 }
 
 async function request<T>(
