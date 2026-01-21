@@ -12,7 +12,7 @@ const app = express();
 const corsOptions = {
   origin: [
     "http://localhost:8080",
-    "https://development-of-big-data-pipeline-fo-three.vercel.app/"
+    "https://development-of-big-data-pipeline-fo-three.vercel.app"
 
     
   ],
