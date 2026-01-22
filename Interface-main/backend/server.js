@@ -11,12 +11,12 @@ const app = express();
 
 const corsOptions = {
   origin: [
-    "http://localhost:5173",
-    "https://development-of-big-data-pipeline-fo-three.vercel.app"
+    "http://localhost:8080",
+    "https://development-of-big-data-pipeline-fo-three.vercel.app",
   ],
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"]
+  allowedHeaders: ["Content-Type", "Authorization"],
 };
 
 app.use(cors(corsOptions)); // ✅ THIS IS ENOUGH
@@ -27,8 +27,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api/patients", require("./routes/patientRoutes"));
 app.use("/api/visits", require("./routes/visitRoutes"));
 app.use("/api/prescriptions", require("./routes/prescriptionRoutes"));
-
-
+app.use("/api/doctors", require("./routes/doctorRoutes"));
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
