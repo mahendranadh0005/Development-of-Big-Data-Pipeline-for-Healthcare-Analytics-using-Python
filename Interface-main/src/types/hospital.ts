@@ -93,20 +93,23 @@ export const CHRONIC_CONDITIONS = [
 ];
 
 export const DOCTOR_SPECIALTIES = [
-  'Cardiology',
-  'Neurology',
-  'Orthopedics',
-  'Pediatrics',
-  'Dermatology',
-  'Gastroenterology',
-  'Oncology',
-  'Psychiatry',
-  'General Medicine',
-  'Surgery'
+  'cardiology',
+  'neurology',
+  'orthopedics',
+  'pediatrics',
+  'dermatology',
+  'gastroenterology',
+  'oncology',
+  'psychiatry',
+  'general',
+  'surgery',
+  'endocrinology',
+  'pulmonology',
+  'nephrology'
 ];
 
 export const DRUGS_BY_SPECIALTY: Record<string, { name: string; category: string }[]> = {
-  'Cardiology': [
+  'cardiology': [
     { name: 'Aspirin', category: 'Antiplatelet' },
     { name: 'Atorvastatin', category: 'Statin' },
     { name: 'Metoprolol', category: 'Beta Blocker' },
@@ -123,7 +126,7 @@ export const DRUGS_BY_SPECIALTY: Record<string, { name: string; category: string
     { name: 'Rivaroxaban', category: 'Anticoagulant' },
     { name: 'Amiodarone', category: 'Antiarrhythmic' },
   ],
-  'Neurology': [
+  'neurology': [
     { name: 'Levodopa', category: 'Dopamine Precursor' },
     { name: 'Gabapentin', category: 'Anticonvulsant' },
     { name: 'Topiramate', category: 'Anticonvulsant' },
@@ -140,7 +143,7 @@ export const DRUGS_BY_SPECIALTY: Record<string, { name: string; category: string
     { name: 'Phenytoin', category: 'Anticonvulsant' },
     { name: 'Riluzole', category: 'Neuroprotective' },
   ],
-  'Orthopedics': [
+  'orthopedics': [
     { name: 'Ibuprofen', category: 'NSAID' },
     { name: 'Naproxen', category: 'NSAID' },
     { name: 'Celecoxib', category: 'COX-2 Inhibitor' },
@@ -157,7 +160,7 @@ export const DRUGS_BY_SPECIALTY: Record<string, { name: string; category: string
     { name: 'Risedronate', category: 'Bisphosphonate' },
     { name: 'Ketorolac', category: 'NSAID' },
   ],
-  'Pediatrics': [
+  'pediatrics': [
     { name: 'Amoxicillin', category: 'Antibiotic' },
     { name: 'Azithromycin', category: 'Antibiotic' },
     { name: 'Acetaminophen', category: 'Analgesic' },
@@ -174,7 +177,7 @@ export const DRUGS_BY_SPECIALTY: Record<string, { name: string; category: string
     { name: 'Ondansetron', category: 'Antiemetic' },
     { name: 'Cefdinir', category: 'Antibiotic' },
   ],
-  'Dermatology': [
+  'dermatology': [
     { name: 'Hydrocortisone', category: 'Corticosteroid' },
     { name: 'Tretinoin', category: 'Retinoid' },
     { name: 'Clindamycin', category: 'Antibiotic' },
@@ -191,7 +194,7 @@ export const DRUGS_BY_SPECIALTY: Record<string, { name: string; category: string
     { name: 'Azelaic Acid', category: 'Keratolytic' },
     { name: 'Methotrexate', category: 'Immunosuppressant' },
   ],
-  'Gastroenterology': [
+  'gastroenterology': [
     { name: 'Omeprazole', category: 'PPI' },
     { name: 'Pantoprazole', category: 'PPI' },
     { name: 'Metoclopramide', category: 'Prokinetic' },
@@ -208,7 +211,7 @@ export const DRUGS_BY_SPECIALTY: Record<string, { name: string; category: string
     { name: 'Budesonide', category: 'Corticosteroid' },
     { name: 'PEG 3350', category: 'Laxative' },
   ],
-  'Oncology': [
+  'oncology': [
     { name: 'Paclitaxel', category: 'Chemotherapy' },
     { name: 'Cisplatin', category: 'Chemotherapy' },
     { name: 'Doxorubicin', category: 'Chemotherapy' },
@@ -225,7 +228,7 @@ export const DRUGS_BY_SPECIALTY: Record<string, { name: string; category: string
     { name: 'Anastrozole', category: 'Hormone Therapy' },
     { name: 'Trastuzumab', category: 'Targeted Therapy' },
   ],
-  'Psychiatry': [
+  'psychiatry': [
     { name: 'Sertraline', category: 'SSRI' },
     { name: 'Fluoxetine', category: 'SSRI' },
     { name: 'Escitalopram', category: 'SSRI' },
@@ -242,7 +245,7 @@ export const DRUGS_BY_SPECIALTY: Record<string, { name: string; category: string
     { name: 'Olanzapine', category: 'Antipsychotic' },
     { name: 'Trazodone', category: 'Antidepressant' },
   ],
-  'General Medicine': [
+  'general': [
     { name: 'Amoxicillin', category: 'Antibiotic' },
     { name: 'Metformin', category: 'Antidiabetic' },
     { name: 'Lisinopril', category: 'ACE Inhibitor' },
@@ -259,7 +262,7 @@ export const DRUGS_BY_SPECIALTY: Record<string, { name: string; category: string
     { name: 'Azithromycin', category: 'Antibiotic' },
     { name: 'Tramadol', category: 'Opioid' },
   ],
-  'Surgery': [
+  'surgery': [
     { name: 'Cefazolin', category: 'Antibiotic' },
     { name: 'Morphine', category: 'Opioid' },
     { name: 'Ketorolac', category: 'NSAID' },
@@ -276,6 +279,29 @@ export const DRUGS_BY_SPECIALTY: Record<string, { name: string; category: string
     { name: 'Oxycodone', category: 'Opioid' },
     { name: 'Ceftriaxone', category: 'Antibiotic' },
   ],
+  endocrinology: [
+    { name: "Metformin", category: "Antidiabetic" },
+    { name: "Insulin", category: "Hormone" },
+    { name: "Glimepiride", category: "Antidiabetic" },
+    { name: "Sitagliptin", category: "Antidiabetic" },
+    { name: "Levothyroxine", category: "Thyroid Hormone" },
+  ],
+  pulmonology: [
+    { name: "Albuterol", category: "Bronchodilator" },
+    { name: "Budesonide", category: "Corticosteroid" },
+    { name: "Montelukast", category: "Leukotriene Inhibitor" },
+    { name: "Tiotropium", category: "Bronchodilator" },
+    { name: "Prednisone", category: "Corticosteroid" },
+  ],
+  
+   nephrology: [
+    { name: "Furosemide", category: "Diuretic" },
+    { name: "Erythropoietin", category: "Hormone" },
+    { name: "Sevelamer", category: "Phosphate Binder" },
+    { name: "Losartan", category: "ARB" },
+    { name: "Amlodipine", category: "Calcium Channel Blocker" },
+  ],
+
 };
 
 // Demo credentials
