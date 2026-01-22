@@ -47,7 +47,7 @@ export interface Prescription {
   prescription_id: string;
   visit_id: string;
   patient_id: string;
-  doctor_id: string;
+  doctor_name: string;
   diagnosis_id: string;
   diagnosis_description: string;
   drug_name: string;

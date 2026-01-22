@@ -5,8 +5,7 @@ const PrescriptionSchema = new mongoose.Schema({
 
   visit_id: { type: String, required: true },
   patient_id: { type: String, required: true },
-  doctor_id: { type: String, required: true },
-
+  doctor_name: { type: String, required: true },
   diagnosis_id: { type: String, required: true },
   diagnosis_description: { type: String, required: true },
 

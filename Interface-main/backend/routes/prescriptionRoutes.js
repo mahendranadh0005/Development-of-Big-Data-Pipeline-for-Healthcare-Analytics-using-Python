@@ -1,7 +1,39 @@
-
 const express = require("express");
 const router = express.Router();
+
 const Prescription = require("../models/Prescription");
+const Visit = require("../models/Visit");
+
+// ✅ POST add prescription (auto-fill doctor_name + patient_id from Visit)
+router.post("/", async (req, res) => {
+  try {
+    const data = req.body;
+
+    const visit = await Visit.findOne({ visit_id: data.visit_id });
+
+    if (!visit) {
+      return res
+        .status(400)
+        .json({ message: "Invalid visit_id. Visit not found." });
+    }
+
+    const prescription = new Prescription({
+      ...data,
+      doctor_name: visit.doctor_name, // ✅ ONLY THIS
+      patient_id: visit.patient_id,   // ✅ also safest auto-fill
+    });
+
+    await prescription.save();
+
+    res.status(201).json({
+      message: "Prescription created successfully",
+      prescription,
+    });
+  } catch (err) {
+    console.error("SAVE PRESCRIPTION ERROR:", err);
+    res.status(500).json({ message: "Server Error", error: err.message });
+  }
+});
 
 // ✅ GET all prescriptions
 router.get("/", async (req, res) => {
@@ -9,24 +41,11 @@ router.get("/", async (req, res) => {
     const prescriptions = await Prescription.find();
     res.json(prescriptions);
   } catch (err) {
-    res.status(500).json({ message: "Error fetching prescriptions" });
+    res.status(500).json({ message: "Server Error" });
   }
 });
 
-// ✅ POST add prescription
-router.post("/", async (req, res) => {
-  try {
-    const prescription = new Prescription(req.body);
-    await prescription.save();
-    res.json({ message: "Prescription saved", prescription });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Error saving prescription" });
-  }
-});
-
-
-
+// ✅ BULK upload prescriptions
 router.post("/bulk", async (req, res) => {
   try {
     await Prescription.insertMany(req.body);
@@ -37,7 +56,7 @@ router.post("/bulk", async (req, res) => {
   }
 });
 
-
+// ✅ DELETE prescription
 router.delete("/:prescriptionId", async (req, res) => {
   try {
     let { prescriptionId } = req.params;
@@ -65,7 +84,5 @@ router.delete("/:prescriptionId", async (req, res) => {
     });
   }
 });
-
-
 
 module.exports = router;

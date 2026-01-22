@@ -13,19 +13,23 @@ export default function DoctorDashboard() {
   const { user } = state.auth;
   const doctorUserId = user?.user_id || "";
 
-const doctor = useMemo(() => {
-        return state.doctors.find((d) => d.user_id === doctorUserId);
-      }, [state.doctors, doctorUserId]);
 
   const doctorName = user?.doctor_name || "";
 
 
-  const doctorId = user?.doctor_id || '';
 
 const myVisits = useMemo(() => {
-        return state.visits.filter((v) => v.doctor_name === doctorName);
-      }, [state.visits, doctorName]);
-  const myPrescriptions = useMemo(() => getPrescriptionsByDoctor(doctorName),[getPrescriptionsByDoctor, doctorName]);
+  if (!doctorName) return [];
+
+  return state.visits.filter(
+    (v) => v.doctor_name?.toLowerCase() === doctorName.toLowerCase()
+  );
+}, [state.visits, doctorName]);
+
+const myPrescriptions = useMemo(() => {
+  if (!doctorName) return [];
+  return getPrescriptionsByDoctor(doctorName);
+}, [getPrescriptionsByDoctor, doctorName]);
 
 
   const uniquePatients = useMemo(() => {

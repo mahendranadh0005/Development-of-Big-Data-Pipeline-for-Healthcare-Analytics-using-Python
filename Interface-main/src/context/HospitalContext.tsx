@@ -215,7 +215,7 @@ interface HospitalContextType {
   getPrescriptionsByVisit: (visitId: string) => Prescription[];
 
   // ✅ ADDED
-  getPrescriptionsByDoctor: (doctorId: string) => Prescription[];
+  getPrescriptionsByDoctor: (doctorName: string) => Prescription[];
 
   getSeverityChange: (visitId: string) => SeverityChange | undefined;
 
@@ -422,17 +422,13 @@ export function HospitalProvider({ children }: { children: React.ReactNode }) {
 
   // ✅ ADDED
   const getPrescriptionsByDoctor = useCallback(
-    (doctorName: string) => {
-      const doctorVisits = state.visits
-        .filter((v) => v.doctor_name === doctorName)
-        .map((v) => v.visit_id);
-
-      return state.prescriptions.filter((p) =>
-        doctorVisits.includes(p.visit_id)
-      );
-    },
-    [state.visits, state.prescriptions]
-  );
+  (doctorName: string) => {
+    return state.prescriptions.filter(
+      (p) => p.doctor_name?.toLowerCase() === doctorName.toLowerCase()
+    );
+  },
+  [state.prescriptions]
+);
 
   const getSeverityChange = useCallback(
     (visitId: string): SeverityChange | undefined => {
