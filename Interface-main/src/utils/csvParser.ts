@@ -182,27 +182,37 @@ export function parsePatientCSV(
     }
 
     // chronic_conditions (allow multiple separated by ;)
-    let chronic_conditions: string[] = [];
+    // ✅ chronic_conditions
+      let chronic_conditions: string[] = [];
 
-    if (chronic_conditions_str) {
-      const lower = chronic_conditions_str.trim().toLowerCase();
+      if (chronic_conditions_str) {
+        const raw = chronic_conditions_str.trim();
 
-      if (!["none", "null", "na"].includes(lower)) {
-        chronic_conditions = chronic_conditions_str
-          .split(";")
-          .map((c) => c.trim())
-          .filter((c) => c.length > 0);
+        // ignore none/null/na
+        if (!["none", "null", "na", "n/a"].includes(raw.toLowerCase())) {
+          chronic_conditions = raw
+            .split(/[,;]+/) // ✅ supports comma and semicolon
+            .map((c) => c.trim())
+            .filter(Boolean)
+            .map((c) => c.toLowerCase()); // normalize
+        }
       }
-    }
 
-    const invalidConditions = chronic_conditions.filter(
-      (c) => !CHRONIC_CONDITIONS.includes(c)
-    );
-    if (invalidConditions.length > 0) {
-      rowErrors.push(
-        `Invalid chronic conditions: ${invalidConditions.join(", ")}`
+      // ✅ map lowercase -> official CHRONIC_CONDITIONS value
+      const conditionMap = new Map(
+        CHRONIC_CONDITIONS.map((c) => [c.toLowerCase(), c])
       );
-    }
+
+      const normalized_conditions = chronic_conditions
+        .map((c) => conditionMap.get(c))
+        .filter(Boolean) as string[];
+
+      const invalidConditions = chronic_conditions.filter((c) => !conditionMap.has(c));
+
+      if (invalidConditions.length > 0) {
+        rowErrors.push(`Invalid chronic conditions: ${invalidConditions.join(",")}`);
+      }
+
 
     // registration_date
     const dateObj = new Date(registration_date);
