@@ -392,10 +392,7 @@ export function parseVisitCSV(
     if (isNaN(length_of_stay) || length_of_stay < 0) {
       rowErrors.push("length_of_stay must be a non-negative integer");
     }
-    if (visit_type === "OP" && length_of_stay !== 0) {
-      rowErrors.push("length_of_stay must be 0 for OP visits");
-    }
-
+    
     // ✅ glucose
     const lab_result_glucose = parseFloat(lab_result_glucose_str);
     if (isNaN(lab_result_glucose)) {
