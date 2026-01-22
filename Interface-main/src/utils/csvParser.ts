@@ -472,12 +472,10 @@ export function parseVisitCSV(
 const PRESCRIPTION_REQUIRED_HEADERS = [
   "prescription_id",
   "visit_id",
-  "patient_id",
-  "doctor_id",
+  "doctor_name", // ✅ from CSV
   "diagnosis_id",
   "diagnosis_description",
   "drug_name",
-  "drug_category",
   "dosage",
   "quantity",
   "days_supply",
@@ -488,9 +486,7 @@ const PRESCRIPTION_REQUIRED_HEADERS = [
 export function parsePrescriptionCSV(
   csvText: string,
   existingPrescriptionIds: string[],
-  existingVisitIds: string[],
-  doctorId: string,
-  doctorVisitIds: string[]
+  existingVisitIds: string[] // ✅ use this to validate visit exists
 ): CSVParseResult<Prescription> {
   const { headers, rows } = parseCSV(csvText);
   const errors: { row: number; message: string }[] = [];
@@ -524,18 +520,17 @@ export function parsePrescriptionCSV(
 
     const prescription_id = row[headerIndex.prescription_id]?.trim();
     const visit_id = row[headerIndex.visit_id]?.trim();
-    const patient_id = row[headerIndex.patient_id]?.trim();
-    const doctor_id = row[headerIndex.doctor_id]?.trim();
+    const doctor_name = row[headerIndex.doctor_name]?.trim();
     const diagnosis_id = row[headerIndex.diagnosis_id]?.trim();
     const diagnosis_description = row[headerIndex.diagnosis_description]?.trim();
     const drug_name = row[headerIndex.drug_name]?.trim();
-    const drug_category = row[headerIndex.drug_category]?.trim();
     const dosage = row[headerIndex.dosage]?.trim();
     const quantity_str = row[headerIndex.quantity]?.trim();
     const days_supply_str = row[headerIndex.days_supply]?.trim();
     const prescribed_date = row[headerIndex.prescribed_date]?.trim();
     const cost_str = row[headerIndex.cost]?.trim();
 
+    // ✅ prescription_id
     if (!prescription_id) rowErrors.push("prescription_id is required");
     else if (
       existingPrescriptionIds.includes(prescription_id) ||
@@ -544,31 +539,42 @@ export function parsePrescriptionCSV(
       rowErrors.push(`prescription_id "${prescription_id}" already exists`);
     }
 
-    if (!doctorVisitIds.includes(visit_id)) {
-      rowErrors.push(
-        `visit_id "${visit_id}" does not belong to this doctor or does not exist`
-      );
+    // ✅ visit_id
+    if (!visit_id) rowErrors.push("visit_id is required");
+    else if (!existingVisitIds.includes(visit_id)) {
+      rowErrors.push(`visit_id "${visit_id}" does not exist`);
     }
 
-    if (doctor_id !== doctorId) {
-      rowErrors.push(`doctor_id must match logged-in doctor (${doctorId})`);
-    }
+    // ✅ doctor_name
+    if (!doctor_name) rowErrors.push("doctor_name is required");
 
+    // ✅ diagnosis
+    if (!diagnosis_id) rowErrors.push("diagnosis_id is required");
+    if (!diagnosis_description) rowErrors.push("diagnosis_description is required");
+
+    // ✅ drug
+    if (!drug_name) rowErrors.push("drug_name is required");
+    if (!dosage) rowErrors.push("dosage is required");
+
+    // ✅ date
     const dateObj = new Date(prescribed_date);
     if (isNaN(dateObj.getTime())) {
       rowErrors.push("prescribed_date must be a valid date");
     }
 
+    // ✅ quantity
     const quantity = parseInt(quantity_str);
     if (isNaN(quantity) || quantity <= 0) {
       rowErrors.push("quantity must be a positive integer");
     }
 
+    // ✅ days_supply
     const days_supply = parseInt(days_supply_str);
     if (isNaN(days_supply) || days_supply <= 0) {
       rowErrors.push("days_supply must be a positive integer");
     }
 
+    // ✅ cost
     const cost = parseFloat(cost_str);
     if (isNaN(cost) || cost < 0) {
       rowErrors.push("cost must be a non-negative number");
@@ -580,12 +586,21 @@ export function parsePrescriptionCSV(
       valid.push({
         prescription_id,
         visit_id,
-        patient_id,
-        doctor_id,
+
+        // ✅ backend can overwrite patient_id later if needed
+        patient_id: "",
+
+        // ✅ store doctor_name from CSV
+        doctor_name,
+
         diagnosis_id,
         diagnosis_description,
+
         drug_name,
-        drug_category,
+
+        // ✅ not in CSV, so empty (or backend can fill)
+        drug_category: "",
+
         dosage,
         quantity,
         days_supply,
