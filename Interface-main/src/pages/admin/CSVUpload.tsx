@@ -63,7 +63,7 @@ export default function AdminCSVUpload() {
           text,
           state.visits.map((v) => v.visit_id),
           state.patients.map((p) => p.patient_id),
-          state.doctors.map((d) => d.doctor_id)
+          state.doctors
         );
 
         setResult(parseResult);
