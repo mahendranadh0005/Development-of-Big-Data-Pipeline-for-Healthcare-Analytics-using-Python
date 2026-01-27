@@ -32,3 +32,10 @@ Thumbs.db
 
 # Logs
 *.log
+
+# ---------------- Airflow ----------------
+airflow/logs/
+airflow/airflow.db
+airflow/**/__pycache__/
+airflow/**/*.pyc
+airflow/plugins/__pycache__/
