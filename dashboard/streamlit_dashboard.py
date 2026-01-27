@@ -72,10 +72,10 @@ h2, h3 {
 # ==============================================================================
 BUCKET = "my-healthcare-analytics-data"
 
-# ✅ Graphs come from this (Gold aggregations)
+#  Graphs come from this (Gold aggregations)
 AGG_BASE = "data_aggregated/"
 
-# ✅ Tables come from this (Master fact table)
+#  Tables come from this (Master fact table)
 FACT_BASE = "compiled_aggregation/"
 
 @st.cache_resource

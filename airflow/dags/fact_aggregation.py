@@ -31,13 +31,13 @@ with DAG(
     )
 
     # =========================================================
-    # ✅ GLUE JOB 1: Generate MASTER FACT TABLE
+    #  GLUE JOB 1: Generate MASTER FACT TABLE
     # Output:
     # compiled_aggregation/batch_id=.../fact_patient_encounters/
     # =========================================================
     run_glue_master_fact = GlueJobOperator(
         task_id="run_master_fact_table",
-        job_name="master fact table",  # ✅ your Glue job name
+        job_name="master fact table",  #  your Glue job name
         aws_conn_id="aws_default",
         region_name=REGION,
         iam_role_name="airflowacesstos3",
@@ -45,7 +45,7 @@ with DAG(
     )
 
     # =========================================================
-    # ✅ SENSOR 2: Wait for FACT TABLE output parquet
+    #  SENSOR 2: Wait for FACT TABLE output parquet
     # =========================================================
     wait_for_fact_table = S3KeySensor(
         task_id="wait_for_fact_table",
@@ -59,18 +59,18 @@ with DAG(
     )
 
     # =========================================================
-    # ✅ GLUE JOB 2: Generate ALL 23 AGGREGATIONS
+    #  GLUE JOB 2: Generate ALL 23 AGGREGATIONS
     # Output:
     # data_aggregated/batch_id=.../<agg_name>/
     # =========================================================
     run_glue_aggregations = GlueJobOperator(
         task_id="run_healthcare_aggregations",
-        job_name="healthcare_aggregation",  # ✅ your Glue aggregation job name
+        job_name="healthcare_aggregation",  #  your Glue aggregation job name
         aws_conn_id="aws_default",
         region_name=REGION,
         iam_role_name="airflowacesstos3",
         wait_for_completion=True
     )
 
-    # ✅ DAG DEPENDENCY CHAIN
+    # DAG DEPENDENCY CHAIN
     wait_for_cleaned_data >> run_glue_master_fact >> wait_for_fact_table >> run_glue_aggregations

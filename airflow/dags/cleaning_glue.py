@@ -73,7 +73,7 @@ with DAG(
     # ---------- GLUE JOB ----------
     run_glue_cleaning = GlueJobOperator(
         task_id="run_glue_cleaning_job",
-        job_name="healthcare_ingest_clean",  # 🔴 CHANGE THIS
+        job_name="healthcare_ingest_clean",  #
         aws_conn_id="aws_default",
         region_name="us-east-1",
         iam_role_name="AWSGlueServiceRole-HealthcareAnalytics",

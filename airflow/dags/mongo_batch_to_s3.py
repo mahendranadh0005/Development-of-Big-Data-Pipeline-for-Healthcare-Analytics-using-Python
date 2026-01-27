@@ -11,14 +11,14 @@ import boto3
 BATCH_SIZE = 10000
 S3_BUCKET = "my-healthcare-analytics-data"
 S3_PREFIX = "data_raw/"
-MONGO_DB = "test"                 # 🔴 MUST match your actual Mongo DB
+MONGO_DB = "test"                 #  MUST match your actual Mongo DB
 MONGO_COLLECTION = "patients"
 AIRFLOW_VAR = "mongo_processed_count"
 DATASET = "patients"
 # ==================
 
 
-# 🔥 FIX: Recursive serializer for Mongo documents
+#  Recursive serializer for Mongo documents
 def serialize_mongo(obj):
     if isinstance(obj, dict):
         return {k: serialize_mongo(v) for k, v in obj.items()}
@@ -55,7 +55,7 @@ def mongo_batch_upload():
         .limit(BATCH_SIZE)
     )
 
-    # 🔥 FIX: serialize ALL nested datetime fields
+    #  serialize ALL nested datetime fields
     data = [serialize_mongo(doc) for doc in cursor]
 
     # Write to temp file
