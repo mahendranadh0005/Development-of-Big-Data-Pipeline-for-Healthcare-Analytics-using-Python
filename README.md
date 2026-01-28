@@ -1,57 +1,44 @@
 # Development-of-Big-Data-Pipeline-for-Healthcare-Analytics-using-Python
+
+Interface Link : https://development-of-big-data-pipeline-fo-three.vercel.app/ 
+Dashboard Link: https://mb5xxdo4ar57ypbqozdxsc.streamlit.app/
+
+
+
 Healthcare Analytics Platform
 
 End-to-End Data Pipeline using MongoDB, Apache Airflow, AWS & Streamlit
 
+
 📌 Project Overview
 
-This project implements a full-stack healthcare analytics system that enables data ingestion, automated ETL, and analytical visualization.
+This repository implements a production-style healthcare analytics system that covers:
 
-The system consists of:
+Data ingestion via a web interface
 
-A web interface for uploading patient and visit data
+Automated ETL orchestration using Apache Airflow
 
-A batch analytics pipeline orchestrated using Apache Airflow
+Scalable processing with AWS Glue
 
-AWS-based storage and processing
+Analytics visualization using Streamlit
 
-An interactive Streamlit dashboard for insights and monitoring
+A lightweight AI-powered query agent for insights over processed data
 
-The goal is to demonstrate production-style data engineering practices including orchestration, cloud storage, automation, and analytics.
+The project demonstrates real-world data engineering and analytics workflows using cloud-native tools.
 
-🧱 Repository Structure
-├── interface-main/        # Frontend interface (Render + Vercel)
-├── airflow/               # Airflow DAGs and ETL logic
-├── dashboard/             # Streamlit analytics dashboard
-├── .gitignore
-└── README.md
 
-🏗️ High-Level Architecture
-Interface (Vercel / Render)
-        ↓
-MongoDB (Operational Data Store)
-        ↓
-Apache Airflow (EC2 – Ubuntu)
-        ↓
-AWS S3 (Raw + Processed Data)
-        ↓
-AWS Glue (ETL & Aggregations)
-        ↓
-Streamlit Dashboard
-
+----------------------------------------------------------------------------------------------------------------------------
 🧑‍💻 Interface Layer (interface-main/)
 
-Provides Admin and Doctor panels
-
-Used to upload:
+Admin and Doctor interfaces for uploading:
 
 Patient data
 
 Visit records
 
-Prescription information
+Prescriptions
 
-Data is stored in MongoDB
+Data stored in MongoDB
 
 Deployed using:
 
@@ -59,138 +46,185 @@ Render (backend)
 
 Vercel (frontend)
 
-This layer acts as the data producer for the analytics pipeline.
+This layer acts as the data source for the analytics pipeline.
 
-⚙️ Airflow & ETL Pipeline (airflow/)
-🔹 Infrastructure
 
-Ubuntu Server on AWS EC2
 
-Apache Airflow installed using pip
 
-Airflow runs as a standalone orchestrator
+--------------------------------------------------------------------------------------------------------------------------
+Airflow Setup & Orchestration (airflow/)
+Infrastructure
 
-🔹 Airflow Responsibilities
+Ubuntu Server hosted on AWS EC2
+
+Apache Airflow installed via pip
+
+Airflow runs as the central orchestration engine
+
+Responsibilities
 
 Extract data from MongoDB
 
-Upload raw batches to AWS S3
+Upload raw batches to Amazon S3
 
-Trigger AWS Glue jobs for:
+Trigger AWS Glue jobs
 
-Data cleaning
+Manage scheduling, retries, and dependencies
 
-Fact table generation
+DAG Management
+
+DAGs are located in airflow/dags/
+
+DAGs are:
+
+Time-based (scheduled)
+
+Manually triggerable
+
+Configuration values are handled through:
+
+Code-level constants
+
+Airflow Variables (where applicable)
+
+Runtime artifacts (logs, metadata DB) are excluded from version control.
+Attach IAM Role  to EC2 Instance with permision for glue and s3
+
+--------------------------------------------------------------------------------------------------------------------------
+AWS Glue ETL Layer
+
+Design Principles
+
+ETL logic lives in Python scripts (jobs/)
+
+Job configuration & infrastructure live in JSON (configs/)
+
+No executable code is embedded inside configuration files
+
+Glue Execution Flow
+
+Glue scripts are stored in an AWS Glue assets S3 bucket
+
+Airflow triggers Glue jobs by job name
+
+Glue reads raw data from S3, performs transformations, and writes:
+
+Cleaned datasets
+
+Master fact table
 
 Aggregations
 
-🔹 DAG Setup
+This separation ensures maintainability and scalability.
+Attach IAM Role  with permision for glue jobs to acces s3
 
-DAGs are located inside airflow/dags/
+--------------------------------------------------------------------------------------------------------------------------
 
-DAGs are time-based (scheduled) and manually triggerable
-
-DAG configuration (S3 paths, Glue job names, etc.) is handled directly in code using:
-
-Airflow Variables
-
-Environment-based constants
-
-🔹 Airflow Setup (Ubuntu EC2)
-
-High-level steps:
-
-# System setup
-sudo apt update
-sudo apt install python3-pip -y
-
-# Airflow installation
-pip install apache-airflow
-
-# Initialize Airflow
-airflow db init
-airflow users create
-airflow standalone
-
-
-Runtime files like logs and metadata DB are intentionally excluded from version control.
-
-☁️ AWS Involvement
-
-AWS is used as the analytics backbone:
-
-Amazon EC2
-Hosts Apache Airflow on Ubuntu
-
-Amazon S3
-
-data-raw/ → raw batch uploads from MongoDB
-
-data-processed/ → cleaned & aggregated outputs
-
-AWS Glue
-
-ETL jobs for cleaning healthcare data
-
-Fact table and aggregation generation
-
-Airflow orchestrates AWS services using scheduled DAGs.
-
-📊 Analytics Dashboard (dashboard/)
-🔹 Technology
+Analytics Dashboard (dashboard/)
+Technology
 
 Built using Streamlit
 
-Reads processed data from AWS S3
+Reads processed datasets from Amazon S3
 
-Displays:
+Features
+Patient -Analytics
+Visit - Analytics
+Prescription - Analytics
+Disease - Analytics
+Cost - Analytics
 
-Visit trends
-
-Patient metrics
-
-Aggregated healthcare insights
-
-🔹 Dashboard Setup
+Setup
 pip install -r requirements.txt
 streamlit run app.py
 
-🔹 AWS Connectivity
 
-Uses AWS credentials via:
+AWS access is handled via IAM roles or environment variables.
 
-IAM Role (recommended on EC2)
+--------------------------------------------------------------------------------------------------------------------------
 
-or environment variables for local testing
+🤖 AI Agent (ai-agent/)
+Overview
 
-export AWS_ACCESS_KEY_ID=...
-export AWS_SECRET_ACCESS_KEY=...
-export AWS_REGION=...
+A lightweight AI-powered analytics assistant built using:
+
+Flask
+
+Python
+
+Grok (LLM)
+
+Capabilities
+
+Fetches structured analytics data from S3 buckets
+
+Uses Grok to:
+
+Answer natural language questions
+
+Summarize healthcare analytics
+
+Provide insights over processed datasets
+
+Role in the System
+
+The AI agent acts as an intelligent query layer on top of the analytics pipeline, enabling conversational access to healthcare data.
+
+------------------------------------------------------------------------------------------------------------------------------------------
+
+ AWS Services Used
+
+EC2 – Airflow orchestration (Ubuntu)
+
+S3 – Raw, processed, and analytics data storage
+
+Glue – ETL jobs and aggregations
+
+IAM – Secure access and execution roles
+
+
+------------------------------------------------------------------------------------------------------------------------------------------
 
 🔐 Configuration & Security
 
-Sensitive files are excluded via .gitignore
+Secrets and credentials are never committed
 
-AWS credentials are never committed
+Runtime files are excluded via .gitignore
 
-Runtime artifacts (logs, cache, DB files) are ignored
+AWS access managed through IAM roles or environment variables
 
-🎯 Key Highlights
 
-End-to-end data engineering workflow
+------------------------------------------------------------------------------------------------------------------------------------------
 
-Production-style Airflow orchestration
 
-Cloud-native analytics using AWS
+Key Highlights
 
-Clean separation of interface, pipeline, and analytics
+Development of a Big Data pipeline for healthcare analytics using Python
 
-GitHub-ready, reproducible setup
+Automated data orchestration using Apache Airflow
+
+Batch ETL processing with AWS Glue
+
+Scalable data storage using Amazon S3
+
+Interactive analytics visualization with Streamlit
+
+AI-powered insight generation using a Flask-based agent with Grok
+
+Clean separation of ingestion, processing, analytics, and AI layers
+
+Production-style project structure and configuration management
+
+Design and implementation of a Big Data pipeline for healthcare analytics using Python and cloud-native services
+
+------------------------------------------------------------------------------------------------------------------------------------------
 
 🚀 Future Enhancements
 
-Real-time ingestion using Kafka/Kinesis
-
-Role-based dashboard access
+Real-time ingestion (Kafka / Kinesis)
 
 Integration with real EHR systems
+
+------------------------------------------------------------------------------------------------------------------------------------------
+
+
